@@ -1,0 +1,1975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>RPG Adventure Game</title>
+    <style>
+        body {
+            font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            background: #0a0a0f;
+            background-image: 
+                radial-gradient(circle at 20% 20%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 255, 198, 0.2) 0%, transparent 50%);
+            background-attachment: fixed;
+            color: #ffffff;
+            margin: 0;
+            padding: 12px;
+            min-height: 100vh;
+            font-weight: 400;
+            letter-spacing: 0.01em;
+            line-height: 1.6;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 8px;
+                font-size: 14px;
+            }
+        }
+        
+        .game-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 24px;
+            background: rgba(15, 15, 20, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 80px rgba(120, 119, 198, 0.1);
+        }
+        
+        @media (max-width: 1024px) {
+            .game-container {
+                grid-template-columns: 1fr 320px;
+                gap: 16px;
+                padding: 16px;
+                border-radius: 16px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .game-container {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                padding: 12px;
+                border-radius: 12px;
+                max-width: 100%;
+            }
+        }
+        
+        .game-world {
+            background: linear-gradient(145deg, rgba(20, 20, 30, 0.8), rgba(25, 25, 35, 0.6));
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            min-height: 600px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .game-world {
+                padding: 12px;
+                min-height: auto;
+                border-radius: 12px;
+            }
+        }
+        
+        .game-map {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 3px;
+            width: 100%;
+            aspect-ratio: 10/8;
+            background: linear-gradient(145deg, rgba(10, 10, 20, 0.6), rgba(20, 20, 30, 0.8));
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4), inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        
+        @media (max-width: 768px) {
+            .game-map {
+                gap: 2px;
+                padding: 8px;
+                border-radius: 8px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .game-map {
+                gap: 1px;
+                padding: 6px;
+            }
+        }
+        
+        .map-cell {
+            background: linear-gradient(135deg, rgba(46, 204, 113, 0.8), rgba(39, 174, 96, 0.9));
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            aspect-ratio: 1;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        @media (max-width: 768px) {
+            .map-cell {
+                font-size: 18px;
+                border-radius: 4px;
+                min-height: 32px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .map-cell {
+                font-size: 16px;
+                border-radius: 3px;
+                min-height: 28px;
+            }
+        }
+        
+        .map-cell:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s;
+        }
+        
+        .map-cell:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 20px rgba(52, 152, 219, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            border-color: rgba(52, 152, 219, 0.6);
+            transform: translateY(-1px);
+            filter: brightness(1.15) saturate(1.1);
+        }
+        
+        .map-cell:hover:before {
+            left: 100%;
+        }
+        
+        .map-cell:active {
+            filter: brightness(0.9);
+            transition: filter 0.1s;
+            box-shadow: 0 0 8px rgba(52, 152, 219, 0.6);
+        }
+        
+        .forest { 
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            animation: forestSway 3s ease-in-out infinite;
+        }
+        .castle { 
+            background: linear-gradient(45deg, #8e44ad, #9b59b6);
+            animation: castleGlow 2s ease-in-out infinite alternate;
+        }
+        .dragon { 
+            background: linear-gradient(45deg, #977f7d, #e74c3c);
+            animation: dragonBreathe 1.5s ease-in-out infinite;
+        }
+        .treasure { 
+            background: linear-gradient(45deg, #f39c12, #f1c40f);
+            animation: treasureSparkle 2s ease-in-out infinite;
+        }
+        .battle { 
+            background: linear-gradient(45deg, #34495e, #2c3e50);
+            animation: battlePulse 1s ease-in-out infinite alternate;
+        }
+        
+        @keyframes forestSway {
+            0%, 100% { transform: rotate(-1deg); }
+            50% { transform: rotate(1deg); }
+        }
+        
+        @keyframes castleGlow {
+            0% { box-shadow: 0 0 5px rgba(155, 89, 182, 0.5); }
+            100% { box-shadow: 0 0 20px rgba(155, 89, 182, 0.8); }
+        }
+        
+        @keyframes dragonBreathe {
+            0%, 100% { transform: scale(1); filter: hue-rotate(0deg); }
+            50% { transform: scale(1.05); filter: hue-rotate(10deg); }
+        }
+        
+        @keyframes treasureSparkle {
+            0%, 100% { transform: scale(1) rotate(0deg); box-shadow: 0 0 10px gold; }
+            25% { transform: scale(1.1) rotate(5deg); box-shadow: 0 0 20px gold, 0 0 30px orange; }
+            50% { transform: scale(1.05) rotate(-2deg); box-shadow: 0 0 15px gold; }
+            75% { transform: scale(1.1) rotate(-5deg); box-shadow: 0 0 25px gold, 0 0 35px yellow; }
+        }
+        
+        @keyframes battlePulse {
+            0% { border-color: #2c3e50; }
+            100% { border-color: #e74c3c; }
+        }
+        .brick-wall { 
+            background: #8b4513; 
+            border: 2px solid #654321;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+        }
+        .potion { 
+            background: radial-gradient(circle, #9b59b6, #8e44ad, #6c3483);
+            border: 2px solid #8e44ad;
+            box-shadow: 0 0 15px rgba(155, 89, 182, 0.6);
+            animation: potionBubble 1.5s ease-in-out infinite, potionGlow 2s infinite alternate;
+            position: relative;
+        }
+        
+        .potion:before {
+            content: '';
+            position: absolute;
+            top: 20%;
+            left: 30%;
+            width: 6px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            animation: bubbleFloat 2s ease-in-out infinite;
+        }
+        
+        .potion:after {
+            content: '';
+            position: absolute;
+            top: 60%;
+            right: 25%;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            animation: bubbleFloat 2.5s ease-in-out infinite reverse;
+        }
+        
+        @keyframes potionGlow {
+            0% { box-shadow: 0 0 15px rgba(155, 89, 182, 0.6); }
+            100% { box-shadow: 0 0 30px rgba(155, 89, 182, 0.9), 0 0 40px rgba(155, 89, 182, 0.4); }
+        }
+        
+        @keyframes potionBubble {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-3px); }
+        }
+        
+        @keyframes bubbleFloat {
+            0%, 100% { transform: translateY(0px) scale(1); opacity: 0.7; }
+            50% { transform: translateY(-10px) scale(1.2); opacity: 1; }
+        }
+        
+        .starting-indicator {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #e74c3c;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            white-space: nowrap;
+            box-shadow: 0 2px 10px rgba(231, 76, 60, 0.4);
+            animation: pointDown 1.5s infinite;
+            z-index: 10;
+        }
+        
+        .starting-indicator::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 10px solid #e74c3c;
+        }
+        
+        @keyframes pointDown {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(5px); }
+        }
+        .wall { 
+            background: #db1313 url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAYAAAA71pVKAAAACXBIWXMAAAsTAAALEwEAmpwYAAAA3ElEQVQoU42TMQ6DMAxF35sOSBWiEhOIjp24QCeOwAU6cQRO0I0TdOQEnTpxhK5MHaADQ4eqA1L/JzshxLGd5+fYP4ZhGIZhGIZh/gvee4QQopRSSqUUzjlYa2Gtxel0wrquqOsaWZZBKYWqqpBlGdI0hbUWzjmklCKlBCEEIQScc5BSQkqJGGOMMcYYI4QQQgicczDGwBgDIQSstbDWwlqLtm1xOBxgjIE1BtZa1HWNuq5R1zXqukZVVajrGlVVoa5rVFWFsizRti2qqsLpdEJd1yjLElVVoSxLlGWJsizRti3KskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKSkRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKSkRZlijLEmVZoixLlGWJsixRliXKskRZlijLEmVZoixLlGWJsixRliXKsk=');
+            background-size: 16px 16px;
+            background-repeat: repeat;
+            border: 2px solid #8b0000;
+        }
+        .player { 
+            background: radial-gradient(circle, #3498db, #2980b9, #1f4e79) !important;
+            animation: playerPulse 2s ease-in-out infinite, playerGlow 3s ease-in-out infinite alternate;
+            position: relative;
+            z-index: 5;
+        }
+        
+        .player:before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #3498db, #e74c3c, #f39c12, #2ecc71);
+            border-radius: inherit;
+            z-index: -1;
+            animation: playerAura 4s linear infinite;
+        }
+        
+        @keyframes playerPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        @keyframes playerGlow {
+            0% { box-shadow: 0 0 10px rgba(52, 152, 219, 0.8); }
+            100% { box-shadow: 0 0 25px rgba(52, 152, 219, 1), 0 0 35px rgba(52, 152, 219, 0.6); }
+        }
+        
+        @keyframes playerAura {
+            0% { transform: rotate(0deg) scale(0.8); opacity: 0.3; }
+            25% { opacity: 0.6; }
+            50% { transform: rotate(180deg) scale(0.9); opacity: 0.3; }
+            75% { opacity: 0.6; }
+            100% { transform: rotate(360deg) scale(0.8); opacity: 0.3; }
+        }
+        
+        .ui-panel {
+            background: #2c3e50;
+            border: 3px solid #ecf0f1;
+            border-radius: 10px;
+            padding: 20px;
+            height: fit-content;
+        }
+        
+        .player-stats {
+            background: #34495e;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-bar {
+            background: #2c3e50;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 5px 0;
+            position: relative;
+        }
+        
+        .health-bar {
+            background: #e74c3c;
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+        
+        .exp-bar {
+            background: #3498db;
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+        
+        .inventory {
+            background: linear-gradient(135deg, rgba(30, 30, 40, 0.7), rgba(40, 40, 50, 0.5));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .inventory-item {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 12px;
+            margin: 4px 0;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+            font-size: 0.9em;
+            font-weight: 400;
+        }
+        
+        .inventory-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(120, 119, 198, 0.4);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .controls {
+            background: linear-gradient(135deg, rgba(30, 30, 40, 0.7), rgba(40, 40, 50, 0.5));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.8), rgba(41, 128, 185, 0.9));
+            color: white;
+            border: 1px solid rgba(52, 152, 219, 0.3);
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 6px 0;
+            transition: all 0.2s ease;
+            width: 100%;
+            font-size: 0.8em;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
+            text-transform: uppercase;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        @media (max-width: 768px) {
+            .btn {
+                padding: 14px 18px;
+                font-size: 0.85em;
+                margin: 8px 0;
+            }
+        }
+        
+        .btn:hover {
+            background: linear-gradient(135deg, rgba(41, 128, 185, 0.9), rgba(30, 96, 138, 1));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(52, 152, 219, 0.3);
+            border-color: rgba(52, 152, 219, 0.5);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
+        }
+        
+        .message-log {
+            background: linear-gradient(145deg, rgba(10, 10, 20, 0.6), rgba(20, 20, 30, 0.4));
+            height: 160px;
+            overflow-y: auto;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.3);
+            scrollbar-width: thin;
+            scrollbar-color: rgba(120, 119, 198, 0.4) transparent;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        @media (max-width: 768px) {
+            .message-log {
+                height: 120px;
+                padding: 8px;
+                font-size: 0.8em;
+            }
+        }
+        
+        .message-log::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .message-log::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .message-log::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+        
+        .message-log::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .message {
+            padding: 8px 12px;
+            margin: 4px 0;
+            border-radius: 6px;
+            animation: fadeIn 0.3s ease;
+            font-size: 0.85em;
+            line-height: 1.3;
+            border-left: 2px solid;
+            background: rgba(255, 255, 255, 0.04);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .message.combat { 
+            border-left-color: #ff6b6b; 
+            background: linear-gradient(90deg, rgba(255, 107, 107, 0.15), rgba(255, 107, 107, 0.03));
+        }
+        .message.success { 
+            border-left-color: #51cf66; 
+            background: linear-gradient(90deg, rgba(81, 207, 102, 0.15), rgba(81, 207, 102, 0.03));
+        }
+        .message.info { 
+            border-left-color: #74c0fc; 
+            background: linear-gradient(90deg, rgba(116, 192, 252, 0.15), rgba(116, 192, 252, 0.03));
+        }
+        .message.treasure { 
+            border-left-color: #ffd43b; 
+            background: linear-gradient(90deg, rgba(255, 212, 59, 0.15), rgba(255, 212, 59, 0.03));
+        }
+        
+        .title {
+            text-align: center;
+            font-size: 2.5em;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: #ffffff;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            letter-spacing: -0.01em;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a252f, #2c3e50);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 1s ease-in;
+        }
+        
+        .welcome-content {
+            background: rgba(44, 62, 80, 0.95);
+            border: 3px solid #ecf0f1;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            max-width: 500px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.8s ease-out;
+        }
+        
+        .welcome-title {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+            background: linear-gradient(45deg, #f39c12, #e74c3c, #9b59b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .welcome-subtitle {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            color: #bdc3c7;
+        }
+        
+        .input-group {
+            margin: 20px 0;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            color: #ecf0f1;
+        }
+        
+        .name-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #34495e;
+            border-radius: 8px;
+            background: #2c3e50;
+            color: white;
+            font-size: 1.1em;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            transition: border-color 0.3s ease;
+        }
+        
+        .name-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
+        }
+        
+        .difficulty-options {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .difficulty-btn {
+            padding: 15px 25px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            background: #34495e;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
+            font-size: 1em;
+            min-width: 100px;
+        }
+        
+        .difficulty-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .difficulty-btn.easy {
+            background: #27ae60;
+            border-color: #2ecc71;
+        }
+        
+        .difficulty-btn.medium {
+            background: #f39c12;
+            border-color: #e67e22;
+        }
+        
+        .difficulty-btn.hard {
+            background: #e74c3c;
+            border-color: #c0392b;
+        }
+        
+        .difficulty-btn.selected {
+            border-color: #ecf0f1;
+            box-shadow: 0 0 15px rgba(236, 240, 241, 0.5);
+        }
+        
+        .start-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            min-width: 150px;
+        }
+        
+        .start-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .start-btn:disabled {
+            background: #7f8c8d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Combat Mode Styles */
+        .combat-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #8b0000, #dc143c, #b22222);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            animation: combatFadeIn 0.8s ease-in, combatBg 10s ease-in-out infinite;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        @media (max-width: 768px) {
+            .combat-screen {
+                padding: 10px;
+            }
+        }
+        
+        .combat-screen:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 70%, rgba(255, 0, 0, 0.3) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 30%, rgba(255, 69, 0, 0.2) 0%, transparent 50%),
+                        radial-gradient(circle at 50% 50%, rgba(139, 0, 0, 0.4) 0%, transparent 70%);
+            animation: combatParticles 8s ease-in-out infinite;
+        }
+        
+        @keyframes combatBg {
+            0%, 100% { background: linear-gradient(135deg, #8b0000, #dc143c, #b22222); }
+            25% { background: linear-gradient(135deg, #a0001a, #dc143c, #8b0000); }
+            50% { background: linear-gradient(135deg, #b22222, #8b0000, #dc143c); }
+            75% { background: linear-gradient(135deg, #dc143c, #b22222, #a0001a); }
+        }
+        
+        @keyframes combatParticles {
+            0%, 100% { transform: translateX(0) translateY(0) rotate(0deg); }
+            25% { transform: translateX(10px) translateY(-5px) rotate(90deg); }
+            50% { transform: translateX(-5px) translateY(10px) rotate(180deg); }
+            75% { transform: translateX(-10px) translateY(-10px) rotate(270deg); }
+        }
+        
+        .combat-screen.hidden {
+            display: none !important;
+        }
+        
+        .combat-content {
+            background: rgba(139, 0, 0, 0.95);
+            border: 4px solid #ffd700;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            max-width: 600px;
+            box-shadow: 0 0 40px rgba(255, 215, 0, 0.6);
+            animation: combatSlideIn 0.6s ease-out;
+        }
+        
+        .combat-title {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.8);
+            color: #ffd700;
+        }
+        
+        .combat-players {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 30px 0;
+            gap: 40px;
+        }
+        
+        .player-combat, .enemy-combat {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #ffd700;
+        }
+        
+        .combat-health {
+            background: #2c3e50;
+            height: 25px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 10px 0;
+            border: 2px solid #ecf0f1;
+        }
+        
+        .health-fill {
+            background: linear-gradient(90deg, #e74c3c 0%, #c0392b 50%, #e74c3c 100%);
+            height: 100%;
+            transition: width 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            position: relative;
+            animation: healthPulse 2s ease-in-out infinite;
+        }
+        
+        .health-fill:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: healthShine 3s ease-in-out infinite;
+        }
+        
+        @keyframes healthPulse {
+            0%, 100% { box-shadow: inset 0 0 10px rgba(192, 57, 43, 0.3); }
+            50% { box-shadow: inset 0 0 20px rgba(192, 57, 43, 0.6); }
+        }
+        
+        @keyframes healthShine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(200%); }
+        }
+        
+        .dice-area {
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            border: 2px solid #ffd700;
+        }
+        
+        .dice {
+            display: inline-block;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            border: 3px solid #333;
+            border-radius: 10px;
+            margin: 0 10px;
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            position: relative;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        @media (max-width: 768px) {
+            .dice {
+                width: 50px;
+                height: 50px;
+                font-size: 1.6em;
+                margin: 0 8px;
+                border-width: 2px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .dice {
+                width: 45px;
+                height: 45px;
+                font-size: 1.4em;
+                margin: 0 6px;
+            }
+        }
+        
+        .dice:before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            right: 5px;
+            bottom: 5px;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.6), transparent);
+            border-radius: 5px;
+            pointer-events: none;
+        }
+        
+        .dice:hover {
+            transform: scale(1.15) translateY(-5px);
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.8), 0 8px 16px rgba(0, 0, 0, 0.3);
+            border-color: #ffd700;
+        }
+        
+        .dice.rolling {
+            animation: diceRollEnhanced 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+        }
+        
+        @keyframes diceRollEnhanced {
+            0% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(90deg) scale(1.1) translateY(-10px); }
+            50% { transform: rotate(180deg) scale(0.9) translateY(5px); }
+            75% { transform: rotate(270deg) scale(1.1) translateY(-15px); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+        
+        .combat-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .combat-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        @media (max-width: 768px) {
+            .combat-btn {
+                padding: 12px 20px;
+                font-size: 1em;
+                margin: 8px 4px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .combat-btn {
+                padding: 10px 16px;
+                font-size: 0.9em;
+                margin: 6px 2px;
+            }
+        }
+        
+        .combat-btn:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s;
+        }
+        
+        .combat-btn:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 107, 107, 0.3);
+        }
+        
+        .combat-btn:hover:before {
+            left: 100%;
+        }
+        
+        .combat-btn:active {
+            transform: translateY(-1px) scale(0.98);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .combat-btn.defend {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+        }
+        
+        .combat-btn.flee {
+            background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+        }
+        
+        .combat-log {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px;
+            border-radius: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        @keyframes combatFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes combatSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        @keyframes diceRoll {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(90deg); }
+            50% { transform: rotate(180deg); }
+            75% { transform: rotate(270deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Welcome Splash Screen -->
+    <div class="welcome-screen" id="welcomeScreen">
+        <div class="welcome-content">
+            <h1 class="welcome-title">� Dungeon Explorer 🏰</h1>
+            <p class="welcome-subtitle">Embark on an epic adventure!</p>
+            
+            <div class="input-group">
+                <label for="playerNameInput">What is your name, brave adventurer?</label>
+                <input type="text" id="playerNameInput" class="name-input" placeholder="Enter your name" maxlength="15" minlength="1" required autocomplete="off" spellcheck="false">
+                <button id="Random Hero" class="btn" style="margin-top:10px; background:#e74c3c; border:none; padding:8px 12px; font-size:0.9em;">Random Hero</button>
+            </div>
+            
+            <div class="input-group">
+                <label>Choose your difficulty:</label>
+                <div class="difficulty-options">
+                    <button class="difficulty-btn easy" data-difficulty="easy">
+                        🟢 Easy<br>
+                        <small>More health & XP</small>
+                    </button>
+                    <button class="difficulty-btn medium" data-difficulty="medium">
+                        🟡 Medium<br>
+                        <small>Balanced gameplay</small>
+                    </button>
+                    <button class="difficulty-btn hard" data-difficulty="hard">
+                        🔴 Hard<br>
+                        <small>True challenge</small>
+                    </button>
+                </div>
+            </div>
+            
+            <button class="start-btn" id="startGameBtn" disabled>🚀 Start Adventure</button>
+        </div>
+    </div>
+
+    <!-- Combat Mode Splash Screen -->
+    <div class="combat-screen hidden" id="combatScreen">
+        <div class="combat-content">
+            <h1 class="combat-title">⚔️ COMBAT MODE! 🎲</h1>
+            
+            <div class="combat-players">
+                <div class="player-combat">
+                    <h3 id="combatPlayerName">Hero</h3>
+                    <div class="combat-health">
+                        <div class="health-fill" id="combatPlayerHealth">100/100</div>
+                    </div>
+                    <p>🛡️ Damage: <span id="combatPlayerDamage">15</span></p>
+                </div>
+                
+                <div class="dice-area">
+                    <h3>🎲 Roll the Dice!</h3>
+                    <div id="diceContainer">
+                        <div class="dice" id="playerDice1">?</div>
+                        <div class="dice" id="playerDice2">?</div>
+                    </div>
+                    <p id="diceResult">Roll to determine your attack power!</p>
+                </div>
+                
+                <div class="enemy-combat">
+                    <h3 id="combatEnemyName">Enemy</h3>
+                    <div class="combat-health">
+                        <div class="health-fill" id="combatEnemyHealth">50/50</div>
+                    </div>
+                    <p>⚔️ Damage: <span id="combatEnemyDamage">8</span></p>
+                </div>
+            </div>
+            
+            <div class="combat-actions">
+                <button class="combat-btn" id="rollDiceBtn" onclick="rollDice()">🎲 Roll Dice & Attack</button>
+                <button class="combat-btn defend" onclick="defendAction()">🛡️ Defend</button>
+                <button class="combat-btn flee" onclick="fleeFromCombat()">🏃 Flee</button>
+            </div>
+            
+            <div class="combat-log" id="combatLog">
+                <p>⚔️ Combat begins! Roll the dice to attack!</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="title hidden" id="gameTitle">�🎮 Dungeon explorer ⚔️</div>
+    
+    <div class="game-container hidden" id="gameContainer">
+        <div class="game-world">
+            <h3>Game World</h3>
+            <div class="game-map" id="gameMap"></div>
+            <div class="message-log" id="messageLog"></div>
+        </div>
+        
+        <div class="ui-panel">
+            <div class="player-stats">
+                <h3 id="playerName"></h3>
+                <div>
+                    <strong>Level:</strong> <span id="playerLevel">2</span>
+                    <strong>Score:</strong> <span id="playerScore">10</span>
+                </div>
+                <div>
+                    <strong>Health:</strong> 
+                    <div class="stat-bar">
+                        <div class="health-bar" id="healthBar"></div>
+                    </div>
+                    <span id="healthText"></span>
+                </div>
+                <div>
+                    <strong>Experience:</strong> 
+                    <div class="stat-bar">
+                        <div class="exp-bar" id="expBar"></div>
+                    </div>
+                    <span id="expText">40/120</span>
+                </div>
+            </div>
+            
+            <div class="inventory">
+                <h3>Inventory</h3>
+                <div id="inventoryList">
+                    <!-- Inventory items will be dynamically generated here -->
+                </div>
+            </div>
+            
+            <div class="controls">
+                <h3>Actions</h3>
+                <button class="btn" onclick="startDialogue()">💬 Talk to NPC</button>
+                <button class="btn" onclick="attackMonster()">⚔️ Attack Monster</button>
+                <button class="btn" onclick="useHealthPotion()">🧪 Use Potion</button>
+                <button class="btn" onclick="showPlayerStatus()">📊 Check Status</button>
+                <button class="btn" onclick="exploreArea()">🗺️ Explore</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Welcome screen variables
+        let selectedDifficulty = null;
+        let gameSettings = {
+            difficulty: null,
+            playerName: "Champion"
+        };
+        
+        // Game state tracking
+        let isFirstMove = true;
+        
+        // Combat system variables
+        let currentEnemy = null;
+        let isPlayerTurn = true;
+        let combatActive = false;
+        let diceRolling = false;
+        let randomNames = ["Aragorn", "Luna", "Thorin", "Elysia", "Darius", "Seraphina", "Galen", "Isolde", "Kael", "Morgana"];
+
+        function getRandomName() {
+            const randomIndex = Math.floor(Math.random() * randomNames.length);
+            return randomNames[randomIndex];
+        }
+        document.getElementById('Random Hero').addEventListener('click', function() {
+            const randomName = getRandomName();
+            const nameInput = document.getElementById('playerNameInput');
+            nameInput.value = randomName;
+            nameInput.dispatchEvent(new Event('input')); // Trigger input event to update state
+        });
+        
+        // Initialize welcome screen
+        function initWelcomeScreen() {
+            const nameInput = document.getElementById('playerNameInput');
+            const difficultyBtns = document.querySelectorAll('.difficulty-btn');
+            const startBtn = document.getElementById('startGameBtn');
+            
+            // Handle name input with comprehensive validation
+            nameInput.addEventListener('input', function() {
+                // Remove any invalid characters (optional: only allow letters, numbers, spaces)
+                let inputValue = this.value || '';
+                
+                // Trim whitespace
+                const trimmedValue = inputValue.trim();
+                
+                // Update game settings only if not null/undefined
+                gameSettings.playerName = trimmedValue || '';
+                
+                // Visual feedback for input validation
+                if (trimmedValue.length === 0) {
+                    this.style.borderColor = '#e74c3c';
+                    this.style.boxShadow = '0 0 10px rgba(231, 76, 60, 0.3)';
+                } else if (trimmedValue.length > 0) {
+                    this.style.borderColor = '#27ae60';
+                    this.style.boxShadow = '0 0 10px rgba(39, 174, 96, 0.3)';
+                } else {
+                    this.style.borderColor = '#34495e';
+                    this.style.boxShadow = 'none';
+                }
+                
+                updateStartButton();
+            });
+            
+            // Additional validation on blur
+            nameInput.addEventListener('blur', function() {
+                if (!this.value || this.value.trim().length === 0) {
+                    this.style.borderColor = '#e74c3c';
+                    this.placeholder = 'Name is required!';
+                } else {
+                    this.placeholder = 'Enter your name';
+                }
+            });
+            
+            // Reset placeholder on focus
+            nameInput.addEventListener('focus', function() {
+                this.placeholder = 'Enter your name';
+            });
+            
+            // Handle difficulty selection
+            difficultyBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Remove selected class from all buttons
+                    difficultyBtns.forEach(b => b.classList.remove('selected'));
+                    
+                    // Add selected class to clicked button
+                    this.classList.add('selected');
+                    
+                    selectedDifficulty = this.dataset.difficulty;
+                    gameSettings.difficulty = selectedDifficulty;
+                    updateStartButton();
+                });
+            });
+            
+            // Handle start button
+            startBtn.addEventListener('click', startGame);
+        }
+        
+        function updateStartButton() {
+            const startBtn = document.getElementById('startGameBtn');
+            
+            // Comprehensive validation for name
+            const hasValidName = gameSettings.playerName !== null && 
+                                gameSettings.playerName !== undefined && 
+                                typeof gameSettings.playerName === 'string' && 
+                                gameSettings.playerName.trim().length > 0;
+            
+            // Validate difficulty selection
+            const hasDifficulty = selectedDifficulty !== null && 
+                                selectedDifficulty !== undefined && 
+                                selectedDifficulty.length > 0;
+            
+            startBtn.disabled = !(hasValidName && hasDifficulty);
+            
+            // Update button text to indicate what's needed
+            if (!hasValidName && !hasDifficulty) {
+                startBtn.textContent = '🚀 Enter Name & Select Difficulty';
+            } else if (!hasValidName) {
+                startBtn.textContent = '🚀 Enter Your Name';
+            } else if (!hasDifficulty) {
+                startBtn.textContent = '🚀 Select Difficulty';
+            } else {
+                startBtn.textContent = '🚀 Start Adventure';
+            }
+        }
+        
+        function startGame() {
+            // Triple validation with comprehensive null/empty checks
+            const nameInput = document.getElementById('playerNameInput');
+            const inputValue = nameInput.value || '';
+            const trimmedName = inputValue.trim();
+            
+            // Validate name input with multiple checks
+            if (!gameSettings.playerName || 
+                gameSettings.playerName === null || 
+                gameSettings.playerName === undefined || 
+                typeof gameSettings.playerName !== 'string' || 
+                gameSettings.playerName.trim().length === 0 ||
+                trimmedName.length === 0) {
+                
+                alert('⚠️ Please enter a valid name (at least 1 character)!');
+                nameInput.focus();
+                nameInput.style.borderColor = '#e74c3c';
+                nameInput.style.boxShadow = '0 0 15px rgba(231, 76, 60, 0.5)';
+                return;
+            }
+            
+            // Validate difficulty selection
+            if (!selectedDifficulty || 
+                selectedDifficulty === null || 
+                selectedDifficulty === undefined ||
+                selectedDifficulty.length === 0) {
+                
+                alert('⚠️ Please select a difficulty level!');
+                return;
+            }
+            
+            // Apply difficulty settings to player
+            applyDifficultySettings();
+            
+            // Update player name (ensure it's not empty)
+            player.name = gameSettings.playerName.trim() || "Champion";
+            
+            // Reset first move flag for new game
+            isFirstMove = true;
+            
+            // Hide welcome screen with animation
+            const welcomeScreen = document.getElementById('welcomeScreen');
+            welcomeScreen.style.animation = 'fadeOut 0.5s ease-out';
+            
+            setTimeout(() => {
+                welcomeScreen.classList.add('hidden');
+                document.getElementById('gameTitle').classList.remove('hidden');
+                document.getElementById('gameContainer').classList.remove('hidden');
+                
+                // Initialize the main game
+                initGame();
+            }, 500);
+        }
+        
+        function applyDifficultySettings() {
+            switch(gameSettings.difficulty) {
+                case 'easy':
+                    player.health = 150;
+                    player.maxHealth = 150;
+                    player.damage = 20;
+                    player.experienceMultiplier = 1.5;
+                    break;
+                case 'medium':
+                    player.health = 100;
+                    player.maxHealth = 100;
+                    player.damage = 15;
+                    player.experienceMultiplier = 1.0;
+                    break;
+                case 'hard':
+                    player.health = 75;
+                    player.maxHealth = 75;
+                    player.damage = 10;
+                    player.experienceMultiplier = 0.8;
+                    break;
+            }
+        }
+        
+        // Add fadeOut animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Your existing player object adapted for HTML
+        let player = {
+            name: "Champion",
+            score: 10,
+            level: 2,
+            health: 90,
+            maxHealth: 110,
+            experience: 40,
+            damage: 15,
+            experienceToNextLevel: 120,
+            inventory: ["Health Potion", "Magic Sword"],
+            x: 5,
+            y: 4,
+            previousX: 5,
+            previousY: 4
+        };
+
+        let enemies = [
+            { name: "Goblin", health: 30, damage: 5, emoji: "👹" },
+            { name: "Orc", health: 50, damage: 8, emoji: "🧌" },
+            { name: "Dragon", health: 200, damage: 25, emoji: "🐉" }
+        ];
+
+
+        // Game map layout
+        let gameMap = [
+            ['🌳','🌳','🌳','🌳','🌳','🌳','🌳','🌳','🌳','🌳'],
+            ['🌳','🧱','🧱','🐉','🧪','🧌','🏰','🧱','⚔️','🌳'],
+            ['🌳','🧱','🧱','⬜','🧱','🧱','🧱','🧱','⬜','🌳'],
+            ['🌳','🧪','💎','👹','🧱','🧱','⬜','💬','⬜','🌳'],
+            ['🌳','⬜','🧱','🧱','🧱','⬜','⬜','🧱','🧪','🌳'],
+            ['🌳','⬜','⬜','🧱','🧱','🧱','🧱','🧱','⬜','🌳'],
+            ['🌳','🧱','💎','⬜','🧪','⬜','⬜','⬜','🧌','🌳'],
+            ['🌳','🌳','🌳','🌳','🌳','🌳','🌳','🌳','🌳','🌳']
+        ];
+
+        // Initialize the game
+        function initGame() {
+            // Ensure combat screen is hidden on game start
+            document.getElementById('combatScreen').classList.add('hidden');
+            document.getElementById('gameContainer').style.filter = 'none';
+            combatActive = false;
+            currentEnemy = null;
+            
+            createGameMap();
+            updateUI();
+            updateInventoryDisplay();
+            addMessage("Welcome to the RPG Adventure! Click on the map to move around.", "info");
+        }
+
+        function createGameMap() {
+            const mapContainer = document.getElementById('gameMap');
+            mapContainer.innerHTML = '';
+            
+            gameMap.forEach((row, y) => {
+                row.forEach((cell, x) => {
+                    const mapCell = document.createElement('div');
+                    mapCell.className = 'map-cell';
+                    
+                    // Set cell type classes
+                    if (cell === '🌳') mapCell.classList.add('forest');
+                    if (cell === '🏰') mapCell.classList.add('castle');
+                    if (cell === '🐉' || cell === '👹' || cell === '🧌') mapCell.classList.add('dragon');
+                    if (cell === '💎') mapCell.classList.add('treasure');
+                    if (cell === '⚔️') mapCell.classList.add('battle');
+                    if (cell === '🧱') mapCell.classList.add('brick-wall');
+                    if (cell === '🧪') mapCell.classList.add('potion');
+                    if (cell === '⬜') mapCell.classList.add('path');
+                    if (cell === '🧙') mapCell.classList.add('player-start');
+                 
+                    if (cell === '💬') mapCell.classList.add('dialogue');
+                    
+                    // Show player position
+                    if (x === player.x && y === player.y) {
+                        mapCell.textContent = '🧙';
+                        mapCell.classList.add('player');
+                        
+                        // Add starting indicator if it's the first move
+                        if (isFirstMove) {
+                            mapCell.style.position = 'relative';
+                            const indicator = document.createElement('div');
+                            indicator.className = 'starting-indicator';
+                            indicator.textContent = '🔻 You start here!';
+                            indicator.id = 'startingIndicator';
+                            mapCell.appendChild(indicator);
+                        }
+                    } else {
+                        mapCell.textContent = cell;
+                    }
+                    
+                    mapCell.onclick = () => movePlayer(x, y);
+                    mapContainer.appendChild(mapCell);
+                });
+            });
+        }
+
+        function movePlayer(newX, newY) {
+            // Check if move is valid (adjacent cell and not a tree)
+            const dx = Math.abs(newX - player.x);
+            const dy = Math.abs(newY - player.y);
+            
+            if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+                const targetCell = gameMap[newY][newX];
+                if (targetCell !== '🌳' && targetCell !== '🧱') {
+                    // Remove starting indicator after first move
+                    if (isFirstMove) {
+                        isFirstMove = false;
+                        const indicator = document.getElementById('startingIndicator');
+                        if (indicator) {
+                            indicator.remove();
+                        }
+                        addMessage('🎯 Great! You\'ve made your first move. Explore the dungeon!', 'success');
+                    }
+                    
+                    // Store previous position before moving
+                    player.previousX = player.x;
+                    player.previousY = player.y;
+                    
+                    player.x = newX;
+                    player.y = newY;
+                    
+                    // Check what player stepped on
+                    const cell = gameMap[newY][newX];
+                    handleCellInteraction(cell);
+                    
+                    createGameMap();
+                } else if (targetCell === '🌳') {
+                    addMessage("🚫 Can't move into the forest!", "combat");
+                } else if (targetCell === '🧱') {
+                    addMessage("🧱 The wall blocks your path!", "combat");
+                }
+            } else {
+                addMessage("You can only move to adjacent cells!", "info");
+            }
+        }
+
+        function handleCellInteraction(cell) {
+            switch(cell) {
+                case '🐉':
+                    addMessage("🐉 You encountered a mighty Dragon!", "combat");
+                    startCombat(enemies[2]);
+                    break;
+                case '👹':
+                    addMessage("👹 A wild Goblin appears!", "combat");
+                    startCombat(enemies[0]);
+                    break;
+                case '🧌':
+                    addMessage("🧌 An Orc blocks your path!", "combat");
+                    startCombat(enemies[1]);
+                    break;
+                case '💎':
+                    addMessage("💎 You found treasure! +50 Experience!", "success");
+                    gainExperience(50);
+                    // Remove treasure from map after collection
+                    gameMap[player.y][player.x] = '⬜';
+                    break;
+                case '🏰':
+                    addMessage("🏰 You reached the castle! Quest complete!", "success");
+                    break;
+                case '⚔️':
+                    addMessage("⚔️ You entered the battle arena!", "info");
+                    break;
+                case '💬':
+                    addMessage("💬 You found a mysterious scroll!", "info");
+                    startDialogue();
+                    // Remove dialogue scroll from map after reading
+                    gameMap[player.y][player.x] = '⬜';
+                    break;
+                case '🧪':
+                    addMessage("🧪 You found a Health Potion!", "success");
+                    player.inventory.push("Health Potion");
+                    updateInventoryDisplay();
+                    // Remove potion from map after collection
+                    gameMap[player.y][player.x] = '⬜';
+                    break;
+            }
+        }
+
+        function startCombat(enemy) {
+            // Prevent combat from starting if game is not properly initialized
+            if (!document.getElementById('gameContainer') || document.getElementById('gameContainer').classList.contains('hidden')) {
+                console.log("Combat prevented: Game not initialized yet");
+                return;
+            }
+            
+            // Create a copy of the enemy to avoid modifying the original
+            currentEnemy = {
+                name: enemy.name,
+                health: enemy.health,
+                maxHealth: enemy.health,
+                damage: enemy.damage,
+                emoji: enemy.emoji
+            };
+            
+            combatActive = true;
+            isPlayerTurn = true;
+            
+            // Show combat screen
+            document.getElementById('combatScreen').classList.remove('hidden');
+            document.getElementById('gameContainer').style.filter = 'blur(5px)';
+            
+            // Update combat UI
+            updateCombatUI();
+            
+            // Add initial combat message to main game
+            addMessage(`⚔️ Entering combat with ${enemy.name}!`, "combat");
+            
+            // Initialize combat log
+            addCombatLog(`⚔️ Combat begins against ${currentEnemy.emoji} ${currentEnemy.name}!`);
+            addCombatLog(`🎲 Your turn! Roll the dice to attack!`);
+        }
+        
+        function updateCombatUI() {
+            document.getElementById('combatPlayerName').textContent = player.name;
+            document.getElementById('combatPlayerDamage').textContent = player.damage;
+            
+            document.getElementById('combatEnemyName').textContent = currentEnemy.name;
+            document.getElementById('combatEnemyDamage').textContent = currentEnemy.damage;
+            
+            // Update health bars
+            const playerHealthPercent = (player.health / player.maxHealth) * 100;
+            const enemyHealthPercent = (currentEnemy.health / currentEnemy.maxHealth) * 100;
+            
+            document.getElementById('combatPlayerHealth').style.width = playerHealthPercent + '%';
+            document.getElementById('combatPlayerHealth').textContent = `${player.health}/${player.maxHealth}`;
+            
+            document.getElementById('combatEnemyHealth').style.width = enemyHealthPercent + '%';
+            document.getElementById('combatEnemyHealth').textContent = `${currentEnemy.health}/${currentEnemy.maxHealth}`;
+        }
+        
+        function rollDice() {
+            if (diceRolling || !isPlayerTurn || !combatActive) return;
+            
+            diceRolling = true;
+            document.getElementById('rollDiceBtn').disabled = true;
+            
+            // Add rolling animation
+            const dice1 = document.getElementById('playerDice1');
+            const dice2 = document.getElementById('playerDice2');
+            
+            dice1.classList.add('rolling');
+            dice2.classList.add('rolling');
+            dice1.textContent = '?';
+            dice2.textContent = '?';
+            
+            setTimeout(() => {
+                // Generate dice results
+                const roll1 = Math.floor(Math.random() * 6) + 1;
+                const roll2 = Math.floor(Math.random() * 6) + 1;
+                const totalRoll = roll1 + roll2;
+                
+                dice1.textContent = roll1;
+                dice2.textContent = roll2;
+                dice1.classList.remove('rolling');
+                dice2.classList.remove('rolling');
+                
+                // Calculate damage based on dice roll
+                const baseDamage = player.damage;
+                const diceMultiplier = totalRoll / 6; // 0.33 to 2.0 multiplier
+                const finalDamage = Math.floor(baseDamage * diceMultiplier) + Math.floor(totalRoll / 2);
+                
+                document.getElementById('diceResult').textContent = `Rolled: ${roll1} + ${roll2} = ${totalRoll} | Damage: ${finalDamage}`;
+                
+                // Apply damage to enemy
+                currentEnemy.health -= finalDamage;
+                if (currentEnemy.health < 0) currentEnemy.health = 0;
+                
+                addCombatLog(`🎲 You rolled ${totalRoll} and dealt ${finalDamage} damage!`);
+                
+                updateCombatUI();
+                
+                // Check if enemy is defeated
+                if (currentEnemy.health <= 0) {
+                    addCombatLog(`🎉 ${currentEnemy.name} defeated!`);
+                    setTimeout(() => {
+                        endCombat(true);
+                    }, 1500);
+                } else {
+                    // Enemy's turn
+                    setTimeout(() => {
+                        enemyTurn();
+                    }, 1500);
+                }
+                
+                diceRolling = false;
+                document.getElementById('rollDiceBtn').disabled = false;
+            }, 1500);
+        }
+        
+        function enemyTurn() {
+            if (!combatActive) return;
+            
+            isPlayerTurn = false;
+            
+            // Enemy attack with dice
+            const enemyRoll1 = Math.floor(Math.random() * 6) + 1;
+            const enemyRoll2 = Math.floor(Math.random() * 6) + 1;
+            const enemyTotal = enemyRoll1 + enemyRoll2;
+            
+            const enemyDamage = Math.floor(currentEnemy.damage * (enemyTotal / 6)) + Math.floor(enemyTotal / 3);
+            
+            player.health -= enemyDamage;
+            if (player.health < 0) player.health = 0;
+            
+            addCombatLog(`👹 ${currentEnemy.name} rolled ${enemyTotal} and dealt ${enemyDamage} damage!`);
+            
+            updateCombatUI();
+            updateUI(); // Update main game UI
+            
+            // Check if player is defeated
+            if (player.health <= 0) {
+                addCombatLog(`💀 You have been defeated!`);
+                setTimeout(() => {
+                    endCombat(false);
+                }, 1500);
+            } else {
+                // Player's turn again
+                setTimeout(() => {
+                    isPlayerTurn = true;
+                    addCombatLog(`🎲 Your turn! Roll the dice!`);
+                    document.getElementById('diceResult').textContent = 'Roll to determine your attack power!';
+                }, 1000);
+            }
+        }
+        
+        function defendAction() {
+            if (!isPlayerTurn || !combatActive) return;
+            
+            // Defending reduces incoming damage by 50% and heals 10% of max health
+            const healAmount = Math.floor(player.maxHealth * 0.1);
+            player.health = Math.min(player.health + healAmount, player.maxHealth);
+            
+            addCombatLog(`🛡️ You defend and recover ${healAmount} health!`);
+            updateCombatUI();
+            updateUI();
+            
+            // Enemy attacks with reduced damage
+            setTimeout(() => {
+                const enemyRoll = Math.floor(Math.random() * 6) + 1;
+                const reducedDamage = Math.floor((currentEnemy.damage * enemyRoll / 6) * 0.5);
+                
+                player.health -= reducedDamage;
+                if (player.health < 0) player.health = 0;
+                
+                addCombatLog(`👹 ${currentEnemy.name} attacks for ${reducedDamage} damage (reduced by defense)!`);
+                
+                updateCombatUI();
+                updateUI();
+                
+                if (player.health <= 0) {
+                    addCombatLog(`💀 You have been defeated!`);
+                    setTimeout(() => endCombat(false), 1500);
+                } else {
+                    setTimeout(() => {
+                        addCombatLog(`🎲 Your turn! Roll the dice!`);
+                    }, 1000);
+                }
+            }, 1000);
+        }
+        
+        function fleeFromCombat() {
+            if (!combatActive) return;
+            
+            const fleeChance = Math.random();
+            if (fleeChance > 0.3) { // 70% success rate
+                addCombatLog(`🏃 You successfully fled from combat!`);
+                
+                // Return to previous position
+                player.x = player.previousX;
+                player.y = player.previousY;
+                
+                setTimeout(() => {
+                    endCombat(false, true);
+                    createGameMap(); // Update the map to show player at previous position
+                }, 1000);
+            } else {
+                addCombatLog(`🚫 Failed to flee! ${currentEnemy.name} blocks your escape!`);
+                setTimeout(() => {
+                    enemyTurn();
+                }, 1500);
+            }
+        }
+        
+        function endCombat(victory, fled = false) {
+            combatActive = false;
+            
+            // Hide combat screen
+            document.getElementById('combatScreen').classList.add('hidden');
+            document.getElementById('gameContainer').style.filter = 'none';
+            
+            if (victory) {
+                addMessage(`🎉 Victory! ${currentEnemy.name} defeated! +30 Experience!`, "success");
+                gainExperience(30);
+                // Remove enemy from map
+                gameMap[player.y][player.x] = '⬜';
+            } else if (fled) {
+                addMessage(`🏃 You fled from combat!`, "info");
+            } else {
+                addMessage(`💀 You were defeated by ${currentEnemy.name}!`, "combat");
+                // Could add respawn logic here
+            }
+            
+            // Reset dice display
+            document.getElementById('playerDice1').textContent = '?';
+            document.getElementById('playerDice2').textContent = '?';
+            document.getElementById('diceResult').textContent = 'Roll to determine your attack power!';
+            
+            currentEnemy = null;
+            createGameMap();
+            updateUI();
+        }
+        
+        function addCombatLog(message) {
+            const log = document.getElementById('combatLog');
+            const p = document.createElement('p');
+            p.textContent = message;
+            log.appendChild(p);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function gainExperience(exp) {
+            const adjustedExp = Math.floor(exp * (player.experienceMultiplier || 1));
+            player.experience += adjustedExp;
+            if (player.experience >= player.experienceToNextLevel) {
+                player.level++;
+                player.experience -= player.experienceToNextLevel;
+                player.experienceToNextLevel = Math.floor(player.experienceToNextLevel * 1.2);
+                player.maxHealth += 10;
+                player.health = player.maxHealth; // Full heal on level up
+                addMessage(`🌟 Level up! Now level ${player.level}!`, "success");
+            }
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('playerName').textContent = player.name;
+            document.getElementById('playerLevel').textContent = player.level;
+            document.getElementById('playerScore').textContent = player.score;
+            document.getElementById('healthText').textContent = `${player.health}/${player.maxHealth}`;
+            document.getElementById('expText').textContent = `${player.experience}/${player.experienceToNextLevel}`;
+            
+            // Update progress bars
+            const healthPercent = (player.health / player.maxHealth) * 100;
+            const expPercent = (player.experience / player.experienceToNextLevel) * 100;
+            
+            document.getElementById('healthBar').style.width = healthPercent + '%';
+            document.getElementById('expBar').style.width = expPercent + '%';
+        }
+
+        function addMessage(text, type = "info") {
+            const messageLog = document.getElementById('messageLog');
+            const message = document.createElement('div');
+            message.className = `message ${type}`;
+            message.textContent = text;
+            messageLog.appendChild(message);
+            messageLog.scrollTop = messageLog.scrollHeight;
+        }
+
+        function startDialogue() {
+            addMessage("💬 NPC: 'Greetings, brave adventurer!'", "info");
+            addMessage("💬 NPC: 'I see you have gained experience on your journey.'", "info");
+            addMessage("💬 NPC: 'Your inventory looks well-stocked for the challenges ahead.'", "info");
+            addMessage("💬 You gained valuable insights! +20 Experience!", "success");
+            gainExperience(20);
+        }
+
+        function attackMonster() {
+            const randomEnemy = enemies[Math.floor(Math.random() * enemies.length)];
+            addMessage(`🎲 Initiating combat mode with ${randomEnemy.name}!`, "combat");
+            startCombat({...randomEnemy}); // Create a copy to avoid modifying original
+        }
+
+        function useHealthPotion() {
+            if (player.inventory.includes("Health Potion")) {
+                const healAmount = 25;
+                player.health = Math.min(player.health + healAmount, player.maxHealth);
+                player.inventory.splice(player.inventory.indexOf("Health Potion"), 1);
+                addMessage(`🧪 Used Health Potion! Restored ${healAmount} health.`, "success");
+                updateUI();
+                updateInventoryDisplay();
+            } else {
+                addMessage("❌ You don't have any Health Potions!", "combat");
+            }
+        }
+
+        function showPlayerStatus() {
+            addMessage(`📊 ${player.name} - Level ${player.level} - Health: ${player.health}/${player.maxHealth}`, "info");
+        }
+
+        function exploreArea() {
+            const discoveries = [
+                "You found some herbs! +5 Health",
+                "You discovered ancient ruins! +10 Experience", 
+                "A friendly merchant gives you a Health Potion!",
+                "You found some coins! +5 Score",
+                "You discovered a Shield!",
+                "You found a mysterious Key!",
+                "A wizard gives you a Mana Potion!"
+            ];
+            
+            const discovery = discoveries[Math.floor(Math.random() * discoveries.length)];
+            addMessage(`🗺️ ${discovery}`, "success");
+            
+            if (discovery.includes("herbs")) {
+                player.health = Math.min(player.health + 5, player.maxHealth);
+            } else if (discovery.includes("Experience")) {
+                gainExperience(10);
+            } else if (discovery.includes("Health Potion")) {
+                player.inventory.push("Health Potion");
+                updateInventoryDisplay();
+            } else if (discovery.includes("Shield")) {
+                player.inventory.push("Shield");
+                updateInventoryDisplay();
+            } else if (discovery.includes("Key")) {
+                player.inventory.push("Key");
+                updateInventoryDisplay();
+            } else if (discovery.includes("Mana Potion")) {
+                player.inventory.push("Mana Potion");
+                updateInventoryDisplay();
+            } else if (discovery.includes("Score")) {
+                player.score += 5;
+            }
+            updateUI();
+        }
+        
+        function equipShield() {
+            addMessage("🛡️ Shield equipped! +5 Defense bonus!", "success");
+            // Add shield logic here if needed
+        }
+        
+        function useManaPotion() {
+            if (player.inventory.includes("Mana Potion")) {
+                player.inventory.splice(player.inventory.indexOf("Mana Potion"), 1);
+                addMessage("💙 Used Mana Potion! Magic power restored!", "success");
+                updateInventoryDisplay();
+            }
+        }
+
+        function updateInventoryDisplay() {
+            const inventoryList = document.getElementById('inventoryList');
+            inventoryList.innerHTML = '';
+            
+            if (player.inventory.length === 0) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'inventory-item';
+                emptyDiv.innerHTML = '<span style="color: #888; font-style: italic;">Empty inventory</span>';
+                inventoryList.appendChild(emptyDiv);
+                return;
+            }
+            
+            // Count items for stacking
+            const itemCounts = {};
+            player.inventory.forEach(item => {
+                itemCounts[item] = (itemCounts[item] || 0) + 1;
+            });
+            
+            // Create inventory items
+            Object.entries(itemCounts).forEach(([item, count]) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'inventory-item';
+                
+                // Define item properties
+                let emoji, actionButton;
+                switch(item) {
+                    case "Health Potion":
+                        emoji = "🧪";
+                        actionButton = `<button class="btn" onclick="useHealthPotion()" style="width: auto; padding: 5px 10px;">Use</button>`;
+                        break;
+                    case "Magic Sword":
+                        emoji = "⚔️";
+                        actionButton = `<span style="color: #27ae60;">Equipped</span>`;
+                        break;
+                    case "Shield":
+                        emoji = "🛡️";
+                        actionButton = `<button class="btn" onclick="equipShield()" style="width: auto; padding: 5px 10px;">Equip</button>`;
+                        break;
+                    case "Key":
+                        emoji = "🗝️";
+                        actionButton = `<span style="color: #f39c12;">Quest Item</span>`;
+                        break;
+                    case "Mana Potion":
+                        emoji = "💙";
+                        actionButton = `<button class="btn" onclick="useManaPotion()" style="width: auto; padding: 5px 10px;">Use</button>`;
+                        break;
+                    default:
+                        emoji = "📦";
+                        actionButton = `<span style="color: #888;">Item</span>`;
+                }
+                
+                const displayName = count > 1 ? `${item} (${count})` : item;
+                
+                itemDiv.innerHTML = `
+                    <span>${emoji} ${displayName}</span>
+                    ${actionButton}
+                `;
+                inventoryList.appendChild(itemDiv);
+            });
+        }
+
+        // Start the welcome screen when page loads
+        window.onload = function() {
+            // Ensure combat screen is hidden on page load
+            document.getElementById('combatScreen').classList.add('hidden');
+            initWelcomeScreen();
+        };
+    </script>
+</body>
+</html>
